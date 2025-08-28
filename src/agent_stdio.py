@@ -15,7 +15,8 @@ polars_server = MCPServerStdio(
     params = MCPServerStdioParams(
         command = "uv",
         args = [f"run", "fastmcp", "run", f"{MODULE_PATH}/server.py"]
-    )
+    ),
+    client_session_timeout_seconds=30,
 )
 
 polars_agent = Agent(
@@ -28,16 +29,22 @@ polars_agent = Agent(
 
         - User will ask a question
         - Transform that into a query that is suited for Full Text Search on top of Polars docs
+            - Try to only use terms related to Polars class names and functions,
+              excluding other words. Examples:
+              Examples:
+                - User: "How do I filter a DataFrame in Polars?"
+                    query: "dataframe filter"
+                - User: "What is the difference between `select` and `with_columns`?"
+                    query: "select with_columns"
+                - User: "Group by examples"
+                    query: "groupby"
             - If you get no results, try using a different variation of the query
         - Consolidate the results and answer the user's initial question with the results obtained
 
-        Important: ONLY provide the answers fetched via the provided tools.
+        Important: ONLY provide the answers based on data fetched via the provided tools.
 
-        Examples:
-          - User: "How do I filter a DataFrame in Polars?"
-            query: "dataframe filter"
-          - User: "What is the difference between `select` and `with_columns`?"
-            query: "select with_columns"
+        Finally, provide the reference URL(s) that you used to come up with your answer at the end.
+
     """),
     model=get_model()
 )

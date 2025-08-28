@@ -23,6 +23,7 @@ async def search(query: str, top_k: int = 1) -> str:
             str: The text content of the search results page.
 
     """
+
     async with async_playwright() as p:
         # Launch browser in headless mode
         browser = await p.chromium.launch(headless=True)
@@ -90,19 +91,21 @@ async def search(query: str, top_k: int = 1) -> str:
                     polars_links.append(href)
             
             if polars_links:
-                # Take the first few links as search results
+
                 selected_links = polars_links[:top_k]
+                logging.info(f"Selected links: {selected_links}")
                 text_results = []
                 
                 browser = await p.chromium.launch(headless=True)
                 for link in selected_links:
+                    logging.info(f"Going to {link}")
                     try:
                         page = await browser.new_page()
                         await page.goto(link)
                         await page.wait_for_load_state("networkidle")
                         
                         # Get the main content
-                        content_selectors = ["main", ".content", ".documentation", "article", "body"]
+                        content_selectors = ["bd-article-container"]
                         content_element = None
                         
                         for selector in content_selectors:
@@ -112,8 +115,7 @@ async def search(query: str, top_k: int = 1) -> str:
                         
                         if content_element:
                             text_content = await content_element.text_content()
-                            # Limit the content to avoid too much data
-                            text_results.append(text_content[:2000] + "..." if len(text_content) > 2000 else text_content)
+                            text_results.append(text_content)
                         
                         await page.close()
                     except Exception as e:
